@@ -1,0 +1,16 @@
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+  external_labels:
+    environment: staging
+
+scrape_configs:
+  - job_name: ink-ai-backend
+    static_configs:
+      - targets: ['backend-staging:8000']
+    metrics_path: /metrics
+    scrape_interval: 10s
+
+  - job_name: prometheus
+    static_configs:
+      - targets: ['localhost:9090']

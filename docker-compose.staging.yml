@@ -1,0 +1,65 @@
+services:
+  postgres-staging:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      POSTGRES_DB: ${POSTGRES_DB:-tattoo_assistant}
+    volumes:
+      - postgres_staging_data:/var/lib/postgresql/data
+    ports:
+      - "5433:5432"
+    networks:
+      - ink-ai-net
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres}"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+
+  backend-staging:
+    image: ${IMAGE_BACKEND:-ink-ai/backend}:${IMAGE_TAG:-latest}
+    restart: unless-stopped
+    environment:
+      DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@postgres-staging:5432/${POSTGRES_DB:-tattoo_assistant}
+      JWT_SECRET_KEY: ${JWT_SECRET_KEY:-staging-secret-change-me}
+      AZURE_OPENAI_ENDPOINT: ${AZURE_OPENAI_ENDPOINT:-}
+      AZURE_OPENAI_API_KEY: ${AZURE_OPENAI_API_KEY:-}
+      AZURE_OPENAI_CHAT_DEPLOYMENT: ${AZURE_OPENAI_CHAT_DEPLOYMENT:-gpt-4o}
+      AZURE_OPENAI_IMAGE_DEPLOYMENT: ${AZURE_OPENAI_IMAGE_DEPLOYMENT:-gpt-image-1}
+      AZURE_SPEECH_KEY: ${AZURE_SPEECH_KEY:-}
+      AZURE_SPEECH_REGION: ${AZURE_SPEECH_REGION:-}
+      CORS_ORIGINS: '["http://localhost:3001"]'
+    ports:
+      - "8001:8000"
+    volumes:
+      - uploads_staging_data:/app/uploads
+    networks:
+      - ink-ai-net
+    depends_on:
+      postgres-staging:
+        condition: service_healthy
+    command: >
+      sh -c "alembic upgrade head && uvicorn app.main:app --host 0.0.0.0 --port 8000"
+
+  frontend-staging:
+    image: ${IMAGE_FRONTEND:-ink-ai/frontend}:${IMAGE_TAG:-latest}
+    restart: unless-stopped
+    environment:
+      NEXT_PUBLIC_API_URL: http://localhost:8001
+    ports:
+      - "3001:3000"
+    networks:
+      - ink-ai-net
+    depends_on:
+      - backend-staging
+
+volumes:
+  postgres_staging_data:
+  uploads_staging_data:
+
+networks:
+  ink-ai-net:
+    external: true
+    name: ink-ai-net
