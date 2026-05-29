@@ -167,7 +167,7 @@ pipeline {
                                   -e SONAR_TOKEN="\${SONAR_AUTH_TOKEN}" \
                                   -e SONAR_SCANNER_OPTS="-Dsonar.nodejs.executable=/usr/local/bin/node" \
                                   -v "\${WORKSPACE}:/usr/src" \
-                                  sonarsource/sonar-scanner-cli:7 \
+                                  sonarsource/sonar-scanner-cli:latest \
                                     -Dsonar.projectVersion=${env.RELEASE_VERSION} \
                                     -Dsonar.python.coverage.reportPaths=/usr/src/coverage/backend-coverage.xml \
                                     -Dsonar.javascript.lcov.reportPaths=/usr/src/frontend/coverage/lcov.info \
@@ -211,7 +211,7 @@ pipeline {
                                 echo '--- tsc ---' &&
                                 npx tsc --noEmit &&
                                 echo '--- eslint ---' &&
-                                npx next lint --dir app --dir components --dir lib || true
+                                npx next lint || true
                               "
                         """
                     }
