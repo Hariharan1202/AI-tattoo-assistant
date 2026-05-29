@@ -51,5 +51,9 @@ export async function uploadImage(token: string, file: File): Promise<string> {
   })
   if (!res.ok) throw new Error(`HTTP ${res.status}`)
   const data = await res.json()
-  return `${API_URL}${data.url}` as string
+  // Return the server-relative path (e.g. /uploads/uuid.jpg).
+  // The FastAPI backend detects this prefix and reads the file from disk,
+  // then base64-encodes it for the Azure vision API.
+  // A full http://localhost:8000/... URL is NOT accessible to Azure's cloud API.
+  return data.url as string
 }

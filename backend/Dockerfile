@@ -2,10 +2,11 @@ FROM python:3.13-slim
 
 WORKDIR /app
 
-# Install system deps for asyncpg and Azure Speech SDK
+# Install system deps: asyncpg build tools, Azure Speech SDK, and ffmpeg for audio conversion
 RUN apt-get update && apt-get install -y --no-install-recommends \
     gcc \
     libpq-dev \
+    ffmpeg \
     && rm -rf /var/lib/apt/lists/*
 
 COPY requirements.txt .

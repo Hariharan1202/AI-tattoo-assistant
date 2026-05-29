@@ -12,7 +12,11 @@ import { sendMessageSSE, isRealToken, uploadImage } from '@/lib/chatApi'
 export default function ConversationPage() {
   const params = useParams()
   const id = params.id as string
-  const hasTriggered = useRef(false)
+  // Track the ID of the last user message we already triggered a response for.
+  // Using an ID (not a boolean flag) makes this immune to React re-render timing:
+  // each message has a unique ID so there is no race condition where a re-render
+  // resets the guard before the effect fires.
+  const lastRespondedId = useRef<string | null>(null)
 
   const setActiveConversation = useChatStore((s) => s.setActiveConversation)
   const addMessage = useChatStore((s) => s.addMessage)
@@ -35,7 +39,16 @@ export default function ConversationPage() {
     async (userContent: string, hasImages = false) => {
       addEmptyAssistantMessage()
       setStreaming(true)
-      const responseText = hasImages ? IMAGE_ANALYSIS_RESPONSE : getMockResponse(userContent)
+      // Pass the full conversation text as context so generate-confirmations
+      // ("yes go ahead") can infer which subject the user is referring to.
+      const conversationContext = useChatStore
+        .getState()
+        .messagesByConversation[id]
+        ?.map((m) => m.content)
+        .join(' ') ?? ''
+      const responseText = hasImages
+        ? IMAGE_ANALYSIS_RESPONSE
+        : getMockResponse(userContent, conversationContext)
       await mockStream(
         responseText,
         (chunk) => appendToLastMessage(id, chunk),
@@ -68,36 +81,51 @@ export default function ConversationPage() {
 
   useEffect(() => {
     setActiveConversation(id)
-    hasTriggered.current = false
   }, [id, setActiveConversation])
 
   useEffect(() => {
-    if (hasTriggered.current) return
     const msgs = useChatStore.getState().messagesByConversation[id] ?? []
     const last = msgs[msgs.length - 1]
-    if (last?.role === 'user') {
-      hasTriggered.current = true
-      if (isRealToken(token)) {
-        triggerRealResponse(last.content, last.imageUrls?.[0])
-      } else {
-        triggerMockResponse(last.content, (last.imageUrls?.length ?? 0) > 0)
-      }
+    // Only respond if:
+    //  1. The last message is from the user
+    //  2. We haven't already triggered a response for this exact message
+    if (last?.role !== 'user' || last.id === lastRespondedId.current) return
+    lastRespondedId.current = last.id
+    if (isRealToken(token)) {
+      // Use the server-relative path stored on the message (set by handleSend
+      // or by the welcome page after upload).  Never pass blob: or http://localhost
+      // URLs — those are local to the browser and not accessible from Azure.
+      triggerRealResponse(last.content, last.serverImageUrl)
+    } else {
+      triggerMockResponse(last.content, (last.imageUrls?.length ?? 0) > 0)
     }
   }, [id, messages.length, token, triggerMockResponse, triggerRealResponse])
 
   const handleSend = useCallback(
     async (content: string, imageFiles?: File[]) => {
+      const msgId = `msg-${Date.now()}`
+      // Reserve this message ID BEFORE calling addMessage so that when Zustand
+      // triggers a re-render and the useEffect above fires, it sees
+      // lastRespondedId === msgId and skips — preventing a duplicate response.
+      lastRespondedId.current = msgId
+
       const localUrls = imageFiles?.map((f) => URL.createObjectURL(f))
+
+      // Add the user message immediately so it appears in the chat bubble right
+      // away, even while the image is still uploading.  The useEffect above is
+      // already guarded by lastRespondedId so it won't fire for this message.
       addMessage(id, {
-        id: `msg-${Date.now()}`,
+        id: msgId,
         role: 'user',
         content,
-        imageUrls: localUrls,
+        imageUrls: localUrls,   // blob URLs for display (available instantly)
         createdAt: new Date().toISOString(),
       })
 
       if (isRealToken(token)) {
-        // Upload first file to get a persistent URL the backend can read
+        // Upload first file to get the server-relative path (/uploads/...)
+        // The backend reads the file from disk using this path — do NOT pass
+        // a full http:// URL or a blob: URL, neither is accessible to Azure.
         let uploadedUrl: string | undefined
         if (imageFiles?.length) {
           try {

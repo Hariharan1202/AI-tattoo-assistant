@@ -19,6 +19,9 @@ interface AuthState {
   register: (name: string, email: string, password: string) => Promise<void>
   logout: () => void
   clearError: () => void
+  /** Call on app startup — verifies token with the backend and syncs user data.
+   *  Clears auth state if the token is expired, revoked, or the DB was reset. */
+  validateToken: () => Promise<boolean>
 }
 
 function setAuthCookie(token: string) {
@@ -73,6 +76,30 @@ export const useAuthStore = create<AuthState>()(
       },
 
       clearError: () => set({ error: null }),
+
+      validateToken: async () => {
+        const { token } = useAuthStore.getState()
+        // Skip validation for demo/mock tokens and missing tokens
+        if (!token || token.startsWith('mock-') || token.startsWith('demo-')) return true
+        try {
+          const { data } = await api.get('/api/auth/me')
+          // Sync the user object (fixes stale or missing name/email)
+          set({ user: data })
+          return true
+        } catch (err: unknown) {
+          // Only clear auth state when the server explicitly rejects the token (401/403).
+          // A network error (backend still starting, timeout, etc.) should NOT log the
+          // user out — they'll get a proper error when they try to use the app.
+          const status = (err as { response?: { status?: number } })?.response?.status
+          if (status === 401 || status === 403) {
+            clearAuthCookie()
+            set({ token: null, user: null })
+            return false
+          }
+          // Network/server error — keep the token, don't redirect
+          return true
+        }
+      },
     }),
     {
       name: 'auth-storage',

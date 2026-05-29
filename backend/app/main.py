@@ -21,7 +21,11 @@ Instrumentator(
 
 app.add_middleware(
     CORSMiddleware,
+    # Explicit production origins from settings
     allow_origins=settings.CORS_ORIGINS,
+    # Allow any localhost port (dev server, preview, etc.) without needing
+    # to know the assigned port in advance
+    allow_origin_regex=r'http://localhost(:\d+)?',
     allow_credentials=True,
     allow_methods=['*'],
     allow_headers=['*'],

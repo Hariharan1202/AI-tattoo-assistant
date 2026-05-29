@@ -4,14 +4,28 @@ import Image from 'next/image'
 import { Message } from '@/store/chatStore'
 import { GenerateButton } from './GenerateButton'
 
-const GENERATE_KEYWORDS = ['generate', 'concept image', 'shall i generate', 'want me to generate']
+// Marker the AI embeds when it wants to offer image generation.
+// Format: [GENERATE: <detailed prompt>]
+const GENERATE_MARKER_RE = /\[GENERATE:\s*([^\]]+)\]/i
 
-function shouldShowGenerate(content: string): boolean {
-  const lower = content.toLowerCase()
-  return GENERATE_KEYWORDS.some((k) => lower.includes(k))
+/**
+ * Split an assistant message into the display text and an optional
+ * generation prompt extracted from the [GENERATE: ...] marker.
+ * The marker is stripped from the visible text.
+ */
+function parseAssistantContent(content: string): {
+  displayText: string
+  generatePrompt: string | null
+} {
+  const match = content.match(GENERATE_MARKER_RE)
+  if (!match) return { displayText: content, generatePrompt: null }
+  return {
+    displayText: content.replace(GENERATE_MARKER_RE, '').trimEnd(),
+    generatePrompt: match[1].trim(),
+  }
 }
 
-function parseContent(text: string) {
+function renderText(text: string) {
   return text.split('\n').map((line, lineIdx, lines) => {
     const parts = line.split(/(\*\*[^*]+\*\*)/)
     return (
@@ -34,11 +48,10 @@ function parseContent(text: string) {
 interface MessageBubbleProps {
   message: Message
   isStreaming?: boolean
-  userPrompt?: string
   conversationId?: string
 }
 
-export function MessageBubble({ message, isStreaming, userPrompt, conversationId }: MessageBubbleProps) {
+export function MessageBubble({ message, isStreaming, conversationId }: MessageBubbleProps) {
   if (message.role === 'user') {
     return (
       <div className="flex justify-end">
@@ -72,33 +85,68 @@ export function MessageBubble({ message, isStreaming, userPrompt, conversationId
     )
   }
 
+  // Parse [GENERATE: ...] marker from the assistant message.
+  // While streaming the marker may be partially written — only parse when done.
+  const { displayText, generatePrompt } = isStreaming
+    ? { displayText: message.content, generatePrompt: null }
+    : parseAssistantContent(message.content ?? '')
+
+  const hasImages = (message.imageUrls?.length ?? 0) > 0
+
   return (
     <div className="flex gap-3 items-start">
       <div className="w-7 h-7 rounded-full bg-[var(--surface-raised)] border border-[var(--border)] flex items-center justify-center flex-shrink-0 mt-0.5">
         <span className="text-[var(--accent)] text-xs leading-none">✦</span>
       </div>
       <div className="flex-1 min-w-0">
-        <div className="rounded-2xl rounded-tl-sm px-4 py-3 bg-[var(--surface-raised)] border border-[var(--border)]">
-          {message.content ? (
-            <>
-              <p className="text-sm text-[var(--foreground)] leading-relaxed">
-                {parseContent(message.content)}
-                {isStreaming && (
-                  <span className="inline-block w-0.5 h-3.5 bg-[var(--accent)] ml-0.5 animate-pulse align-middle" />
-                )}
-              </p>
-              {!isStreaming && shouldShowGenerate(message.content) && userPrompt && (
-                <GenerateButton prompt={userPrompt} conversationId={conversationId} />
+        {/* Text bubble — skip entirely if this is an image-only message */}
+        {message.content ? (
+          <div className="rounded-2xl rounded-tl-sm px-4 py-3 bg-[var(--surface-raised)] border border-[var(--border)]">
+            <p className="text-sm text-[var(--foreground)] leading-relaxed">
+              {renderText(displayText ?? '')}
+              {isStreaming && (
+                <span className="inline-block w-0.5 h-3.5 bg-[var(--accent)] ml-0.5 animate-pulse align-middle" />
               )}
-            </>
-          ) : (
+            </p>
+            {/* Show generate button only when: streaming is done AND the AI embedded a [GENERATE: ...] marker */}
+            {!isStreaming && generatePrompt && (
+              <GenerateButton prompt={generatePrompt} conversationId={conversationId} />
+            )}
+          </div>
+        ) : !hasImages ? (
+          /* Loading dots — only when there's no content AND no images yet */
+          <div className="rounded-2xl rounded-tl-sm px-4 py-3 bg-[var(--surface-raised)] border border-[var(--border)]">
             <div className="flex gap-1 items-center h-5">
               <div className="w-1.5 h-1.5 rounded-full bg-[var(--foreground-muted)] animate-bounce [animation-delay:0ms]" />
               <div className="w-1.5 h-1.5 rounded-full bg-[var(--foreground-muted)] animate-bounce [animation-delay:150ms]" />
               <div className="w-1.5 h-1.5 rounded-full bg-[var(--foreground-muted)] animate-bounce [animation-delay:300ms]" />
             </div>
-          )}
-        </div>
+          </div>
+        ) : null}
+
+        {/* Generated images — shown below text (or standalone for image-only messages) */}
+        {!isStreaming && hasImages && (
+          <div className={`flex flex-col gap-2 ${message.content ? 'mt-2' : ''}`}>
+            {message.imageUrls!.map((url, i) => (
+              <div
+                key={i}
+                className="relative rounded-xl overflow-hidden border border-[var(--accent)]/20 max-w-sm bg-[var(--surface-raised)]"
+              >
+                <Image
+                  src={url}
+                  alt="Generated tattoo concept"
+                  width={512}
+                  height={512}
+                  className="w-full object-contain"
+                  unoptimized
+                />
+                <div className="absolute bottom-2 right-2 px-2 py-0.5 rounded-md bg-black/50 backdrop-blur-sm text-[10px] text-white/70 font-medium">
+                  AI Concept
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   )

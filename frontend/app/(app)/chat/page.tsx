@@ -4,7 +4,7 @@ import { useRouter } from 'next/navigation'
 import { ChatInput } from '@/components/chat/ChatInput'
 import { useChatStore } from '@/store/chatStore'
 import { useAuthStore } from '@/store/authStore'
-import { isRealToken, createConversation } from '@/lib/chatApi'
+import { isRealToken, createConversation, uploadImage } from '@/lib/chatApi'
 
 const QUICK_PROMPTS = [
   { icon: '🐉', prompt: 'Minimal dragon tattoo, Japanese style, forearm' },
@@ -19,7 +19,11 @@ export default function ChatPage() {
   const token = useAuthStore((s) => s.token)
 
   async function handleSend(content: string, imageFiles?: File[]) {
-    const imageUrls = imageFiles?.map((f) => URL.createObjectURL(f))
+    // Blob URLs (URL.createObjectURL) are only valid in this browser session and
+    // are NOT accessible to Azure APIs running in the cloud.  We store them for
+    // local preview but also upload to get a server-relative path that the
+    // conversation page can safely pass to the backend.
+    const localUrls = imageFiles?.map((f) => URL.createObjectURL(f))
 
     let convId: string
 
@@ -33,13 +37,25 @@ export default function ChatPage() {
       convId = `conv-${Date.now()}`
     }
 
+    // Upload image (if any) before navigating so the conversation page's
+    // useEffect receives a /uploads/ path instead of a blob: URL.
+    let serverImageUrl: string | undefined
+    if (isRealToken(token) && imageFiles?.length) {
+      try {
+        serverImageUrl = await uploadImage(token!, imageFiles[0])
+      } catch {
+        serverImageUrl = undefined
+      }
+    }
+
     addConversation({ id: convId, title: content.slice(0, 60), updatedAt: 'just now' })
     setActiveConversation(convId)
     addMessage(convId, {
       id: `msg-${Date.now()}`,
       role: 'user',
       content,
-      imageUrls,
+      imageUrls: localUrls,          // blob URLs — display only in the chat bubble
+      serverImageUrl,                 // /uploads/... — passed to Azure by the conversation page
       createdAt: new Date().toISOString(),
     })
     router.push(`/chat/${convId}`)

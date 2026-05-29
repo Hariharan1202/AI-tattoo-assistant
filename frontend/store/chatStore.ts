@@ -6,7 +6,14 @@ export interface Message {
   id: string
   role: 'user' | 'assistant' | 'system'
   content: string
+  /** Blob / data URLs used for local display in the chat bubble. */
   imageUrls?: string[]
+  /**
+   * Server-relative path to the uploaded file, e.g. /uploads/uuid.jpg.
+   * This is the value passed to the backend for Azure vision analysis —
+   * blob: and http://localhost URLs are not accessible from the cloud.
+   */
+  serverImageUrl?: string
   createdAt: string
 }
 

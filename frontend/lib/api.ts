@@ -7,9 +7,15 @@ const api = axios.create({
 
 api.interceptors.request.use((config) => {
   if (typeof window !== 'undefined') {
-    const token = localStorage.getItem('auth-token')
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`
+    // Zustand persists auth state under 'auth-storage' → { state: { token, user } }
+    try {
+      const stored = JSON.parse(localStorage.getItem('auth-storage') || '{}')
+      const token: string | undefined = stored?.state?.token
+      if (token) {
+        config.headers.Authorization = `Bearer ${token}`
+      }
+    } catch {
+      // ignore JSON parse errors
     }
   }
   return config
@@ -17,14 +23,7 @@ api.interceptors.request.use((config) => {
 
 api.interceptors.response.use(
   (response) => response,
-  (error) => {
-    if (error.response?.status === 401 && typeof window !== 'undefined') {
-      localStorage.removeItem('auth-token')
-      document.cookie = 'auth-token=; path=/; max-age=0'
-      window.location.href = '/login'
-    }
-    return Promise.reject(error)
-  }
+  (error) => Promise.reject(error)
 )
 
 export default api

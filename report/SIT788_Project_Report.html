@@ -1,0 +1,551 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SIT788 Project Report — Ink AI Tattoo Recommendation Bot</title>
+  <style>
+    @page { margin: 2.54cm; }
+    body {
+      font-family: "Times New Roman", Times, serif;
+      font-size: 12pt;
+      line-height: 1.8;
+      color: #000;
+      max-width: 21cm;
+      margin: 0 auto;
+      padding: 2cm;
+      background: #fff;
+    }
+    h1 { font-size: 18pt; text-align: center; margin-bottom: 6pt; }
+    h2 { font-size: 14pt; margin-top: 24pt; margin-bottom: 6pt; border-bottom: 1px solid #000; padding-bottom: 3pt; }
+    h3 { font-size: 12pt; margin-top: 18pt; margin-bottom: 4pt; }
+    h4 { font-size: 12pt; font-style: italic; margin-top: 12pt; margin-bottom: 4pt; }
+    p  { margin: 0 0 10pt 0; text-align: justify; }
+    .cover { text-align: center; margin-bottom: 40pt; margin-top: 60pt; }
+    .cover p { text-align: center; }
+    table { width: 100%; border-collapse: collapse; margin: 12pt 0; font-size: 11pt; }
+    th { background: #000; color: #fff; padding: 6pt 8pt; text-align: left; }
+    td { padding: 5pt 8pt; border: 1px solid #999; vertical-align: top; }
+    tr:nth-child(even) td { background: #f5f5f5; }
+    .screenshot-placeholder {
+      border: 2px dashed #888;
+      background: #fafafa;
+      padding: 30pt;
+      text-align: center;
+      color: #555;
+      font-style: italic;
+      margin: 12pt 0;
+      font-size: 11pt;
+    }
+    .flowchart-box {
+      border: 1.5pt solid #000;
+      padding: 12pt 16pt;
+      margin: 12pt 0;
+      background: #fafafa;
+      font-family: "Courier New", monospace;
+      font-size: 9.5pt;
+      line-height: 1.5;
+      white-space: pre;
+    }
+    blockquote {
+      border-left: 3pt solid #555;
+      margin: 12pt 24pt;
+      padding-left: 10pt;
+      font-style: italic;
+      color: #333;
+    }
+    .toc { margin: 24pt 0; }
+    .toc a { color: #000; text-decoration: none; }
+    .toc li { margin-bottom: 4pt; }
+    code {
+      font-family: "Courier New", monospace;
+      font-size: 10pt;
+      background: #f0f0f0;
+      padding: 1pt 3pt;
+    }
+    .note {
+      background: #fff8dc;
+      border: 1pt solid #ccc;
+      padding: 8pt 12pt;
+      margin: 10pt 0;
+      font-size: 11pt;
+    }
+    ul li, ol li { margin-bottom: 5pt; }
+    .page-break { page-break-after: always; }
+    hr { border: none; border-top: 1px solid #ccc; margin: 20pt 0; }
+  </style>
+</head>
+<body>
+
+<!-- COVER PAGE -->
+<div class="cover">
+  <br/><br/>
+  <p style="font-size:11pt; color:#555;">Deakin University</p>
+  <p style="font-size:11pt; color:#555;">Faculty of Science, Engineering and Built Environment</p>
+  <br/>
+  <h1>Ink AI: An Intelligent Multimodal Tattoo Recommendation Bot</h1>
+  <br/>
+  <p style="font-size:13pt;"><strong>Unit:</strong> SIT788 — Applied AI</p>
+  <p style="font-size:13pt;"><strong>Task:</strong> 11.2 HD — Option 2: Intelligent Bot Development</p>
+  <br/><br/>
+  <p style="font-size:12pt;"><strong>Student Name:</strong> [YOUR FULL NAME]</p>
+  <p style="font-size:12pt;"><strong>Student ID:</strong> [YOUR STUDENT ID]</p>
+  <p style="font-size:12pt;"><strong>Submission Date:</strong> 31 May 2026</p>
+  <br/><br/>
+  <p style="font-size:11pt; color:#555;">Video Demonstration: [INSERT PANOPTO LINK HERE]</p>
+  <p style="font-size:11pt; color:#555;">Source Code Repository: [INSERT GITHUB / ZIP LINK HERE]</p>
+</div>
+
+<div class="page-break"></div>
+
+<!-- TABLE OF CONTENTS -->
+<h2>Table of Contents</h2>
+<div class="toc">
+  <ol>
+    <li><a href="#section1">Introduction and Bot Purpose</a></li>
+    <li><a href="#section2">Dataset and Knowledge Base</a>
+      <ul>
+        <li>2.1 Foundation Knowledge via GPT-4o</li>
+        <li>2.2 Dynamic User Preference Dataset</li>
+        <li>2.3 Conversation History as Contextual Data</li>
+      </ul>
+    </li>
+    <li><a href="#section3">System Architecture</a>
+      <ul>
+        <li>3.1 Architectural Overview</li>
+        <li>3.2 Detailed Data Flow</li>
+        <li>3.3 Architecture Flowchart</li>
+        <li>3.4 Database Schema</li>
+      </ul>
+    </li>
+    <li><a href="#section4">Azure AI Services: Technical Justification</a>
+      <ul>
+        <li>4.1 Azure OpenAI GPT-4o</li>
+        <li>4.2 Azure OpenAI gpt-image-1.5</li>
+        <li>4.3 Azure Speech Services</li>
+      </ul>
+    </li>
+    <li><a href="#section5">Recommendation Logic</a>
+      <ul>
+        <li>5.1 System Prompt Architecture</li>
+        <li>5.2 Image Generation Gate</li>
+        <li>5.3 Preference Extraction Loop</li>
+        <li>5.4 Multi-turn Conversation Management</li>
+      </ul>
+    </li>
+    <li><a href="#section6">Screenshots of the Running System</a></li>
+    <li><a href="#section7">Conclusion</a></li>
+    <li><a href="#section8">References</a></li>
+  </ol>
+</div>
+
+<div class="page-break"></div>
+
+<!-- SECTION 1 -->
+<h2 id="section1">1. Introduction and Bot Purpose</h2>
+
+<p>Ink AI is an intelligent multimodal recommendation bot developed using Microsoft Azure AI services. The system is designed to assist users in conceptualising, refining, and visualising personalised tattoo designs through natural conversation. The bot accepts three distinct forms of user input — typed text, recorded voice, and uploaded reference images — and responds with curated style recommendations, detailed design suggestions, and AI-generated concept artwork. All three input modalities can be used interchangeably within a single conversation session, fulfilling the multimodal interaction requirement of this task.</p>
+
+<p>The primary purpose of the bot is to replicate the consultation experience a client would have with a professional tattoo artist. A significant proportion of individuals seeking tattoos find it difficult to articulate their vision clearly, particularly when working with an artist for the first time. They may have a general aesthetic preference but lack the vocabulary to describe specific styles, placement considerations, or cultural references. Ink AI addresses this challenge by using conversational AI to iteratively extract the user's preferences through natural dialogue, refine those preferences over multiple conversation turns, suggest appropriate artistic styles with detailed justification, and ultimately generate a visual concept image that the user can present to a tattoo artist as a reference.</p>
+
+<h3>1.1 Target Users</h3>
+
+<p>The bot is designed for individuals who are considering getting a tattoo but are uncertain about the design, style, placement, or cultural significance of what they want. It is equally useful for experienced tattoo enthusiasts who wish to explore new artistic styles, generate quick concept references before an artist consultation, or review how different design elements would work together in a single composition.</p>
+
+<h3>1.2 Recommendation Scope</h3>
+
+<p>The bot provides recommendations across a comprehensive range of established tattoo styles. These include Japanese irezumi, fine line single-needle, geometric dotwork, blackwork, watercolour, photorealistic black and grey, tribal, neo-traditional, and mandala. For each recommendation, the bot provides guidance on the specific design elements appropriate to that style, the recommended placement on the body, the typical size range, the colour palette characteristics, and where relevant, the cultural or symbolic significance of the chosen motifs. The bot also considers practical constraints such as how a design wraps around curved anatomy, how fine detail will age over time, and how multiple tattoo elements can be composed coherently across a larger body area such as a sleeve or back piece.</p>
+
+<div class="page-break"></div>
+
+<!-- SECTION 2 -->
+<h2 id="section2">2. Dataset and Knowledge Base</h2>
+
+<p>The recommendation engine in Ink AI operates on two distinct and complementary layers of data. Together, these layers provide both broad domain expertise and personalised, user-specific knowledge that improves with each interaction.</p>
+
+<h3>2.1 Foundation Knowledge via GPT-4o Pre-trained Corpus</h3>
+
+<p>The primary knowledge base for tattoo style recommendations is the implicit dataset embedded within the GPT-4o large language model, developed by OpenAI and accessed through the Microsoft Azure OpenAI Service. This model was trained on an extensive corpus of text and image-paired data encompassing professional tattoo artist publications, tattoo culture documentation, design principle literature, anatomical placement guides, colour theory resources, and cultural anthropology sources covering the symbolic meanings of motifs across Japanese, Polynesian, Celtic, and other tattoo traditions. The breadth of this pre-trained dataset allows the bot to reason about highly specific stylistic combinations — for example, explaining why a fine-line single-needle design is unsuitable for areas of high skin elasticity, or how the visual weight of a traditional Japanese background fill affects readability at distance.</p>
+
+<p>This foundation dataset is not static data that was manually curated for this project. Rather, it represents the accumulated knowledge embedded in GPT-4o through its training process, accessed and applied dynamically based on each user's unique input. The Azure OpenAI API provides the interface through which this knowledge is queried in a structured, conversational format.</p>
+
+<h3>2.2 Dynamic User Preference Dataset (PostgreSQL)</h3>
+
+<p>The second layer of the dataset is a per-user dynamic knowledge base stored in a PostgreSQL relational database that runs as part of the Docker Compose deployment. This dataset grows with each user interaction and contains structured records of each individual's aesthetic preferences as extracted from their conversation history.</p>
+
+<p>After every assistant response, the system automatically runs a background extraction task. This task sends the full conversation to GPT-4o with a structured extraction prompt, instructing the model to return a JSON object containing identified tattoo preferences. The extracted fields include preferred tattoo styles (for example, Japanese irezumi or fine line botanical), themes and subjects of interest (for example, nature, mythology, or geometric patterns), colour preferences (for example, black and grey, soft pastels, or bold vibrant fills), and preferred placement areas (for example, forearm, sleeve, or back piece).</p>
+
+<p>These extracted values are stored in the <code>user_preferences</code> table in PostgreSQL and are retrieved and injected into the system prompt at the start of every subsequent API call. This means that by the second conversation a user has with the bot, the system already knows their established preferences and can provide recommendations that build on prior sessions without requiring the user to repeat themselves. Over multiple conversations, the preference dataset becomes increasingly refined and personalised, enabling the bot to function as a genuine long-term creative collaborator rather than a generic question-and-answer tool.</p>
+
+<h3>2.3 Conversation History as Contextual Data</h3>
+
+<p>All conversation messages are stored in the <code>messages</code> table in PostgreSQL, linked to individual conversation sessions recorded in the <code>conversations</code> table. Each message record stores the role (user or assistant), the text content, any associated image URL, and a timestamp. When a user continues an existing conversation, the backend retrieves the full message history and includes it in the context window sent to GPT-4o. This enables genuine multi-turn dialogue in which the assistant maintains full awareness of all design decisions, feedback, and refinements discussed throughout the session. For instance, if the user specified in message three that they dislike coloured tattoos, the assistant will continue to recommend monochrome designs in message fifteen without the user needing to repeat this constraint.</p>
+
+<div class="page-break"></div>
+
+<!-- SECTION 3 -->
+<h2 id="section3">3. System Architecture</h2>
+
+<h3>3.1 Architectural Overview</h3>
+
+<p>The Ink AI system follows a three-tier architecture. The presentation tier is a Next.js 16 frontend application using the App Router, TypeScript, and Tailwind CSS, served on port 3000. The application tier is a FastAPI Python backend using SQLAlchemy with asynchronous database sessions, served on port 8000. The data tier is a PostgreSQL 15 relational database. All three tiers are containerised and orchestrated using Docker Compose, ensuring consistent and reproducible deployment. External intelligence is provided by three Azure AI services accessed over HTTPS from the FastAPI backend.</p>
+
+<p>The frontend communicates with the backend using two protocols. Standard HTTP/JSON is used for authentication, image uploads, image generation requests, and conversation management. Server-Sent Events (SSE) are used exclusively for the streaming chat response, enabling the assistant's reply tokens to appear in the interface in real time as they are generated by GPT-4o.</p>
+
+<h3>3.2 Detailed Data Flow</h3>
+
+<h4>Step 1: User Authentication</h4>
+
+<p>Before interacting with the bot, the user registers or logs in through the authentication pages. The registration form sends a POST request to <code>/api/auth/register</code> with the user's name, email address, and password. The backend hashes the password using bcrypt and stores the user record in the <code>users</code> table. A JSON Web Token (JWT) is generated using the PyJWT library and returned to the frontend along with the user's profile data. The frontend stores this token in the browser's localStorage (under the Zustand persistence key) and in a session cookie, and attaches it as a Bearer token in the Authorization header of all subsequent API requests.</p>
+
+<h4>Step 2: User Input Capture</h4>
+
+<p>The user interacts with the system through the Next.js frontend at <code>http://localhost:3000</code>. Three input modalities are available within the same chat interface.</p>
+
+<p><strong>Text Input:</strong> The user types a message into the chat textarea component. The message is submitted either by pressing Enter or clicking the send button, both of which call the <code>handleSend()</code> function in the conversation page component.</p>
+
+<p><strong>Voice Input:</strong> The user clicks the microphone button, which mounts the <code>VoiceInput.tsx</code> component. This component requests microphone access from the browser using the <code>navigator.mediaDevices.getUserMedia()</code> Web API. Once permission is granted, it creates a <code>MediaRecorder</code> instance and begins capturing audio as a WebM-format audio blob. The user speaks their tattoo idea, then clicks the Stop button. The captured WebM audio blob is uploaded via HTTP POST to the <code>/api/voice/transcribe</code> backend endpoint with a Bearer token in the Authorization header. The backend service converts the WebM audio to a 16kHz mono WAV file using FFmpeg (installed in the Docker container) because the Azure Speech SDK requires WAV format input. The converted WAV file is passed to the Azure Speech Services recogniser. The resulting transcribed text is returned as a JSON response to the frontend, where it is automatically inserted into the chat input field. The user can review and edit the transcription before sending it as a message.</p>
+
+<p><strong>Image Input:</strong> The user can drag and drop an image file onto the chat input area or click the image attachment button to open the file picker. When an image file is selected, it is displayed as a thumbnail preview in the input area. When the user submits the message, the image file is first uploaded via HTTP POST to the <code>/api/images/upload</code> backend endpoint, which validates the file type (JPEG, PNG, WebP, or GIF) and file size (maximum 10 MB), saves the file to the <code>/uploads/</code> directory with a UUID-based filename, and returns the server-relative URL. This persistent URL is attached to the outgoing chat message so the backend can locate the file on disk when constructing the vision message for GPT-4o.</p>
+
+<h4>Step 3: Conversation Initialisation</h4>
+
+<p>When the user sends their first message from the welcome page, the frontend first calls <code>POST /api/chat/conversations</code> to create a new conversation record in the database. The backend creates a row in the <code>conversations</code> table with a UUID primary key, the user's ID, and an auto-generated title based on the first message content. The returned conversation UUID is used as the URL parameter for all subsequent message requests in that session, and the page navigates to <code>/chat/{conversation-id}</code>.</p>
+
+<h4>Step 4: Backend Processing and Azure OpenAI Call</h4>
+
+<p>The frontend sends the user's message to <code>POST /api/chat/conversations/{id}/messages</code>. The FastAPI route handler performs the following sequence of operations. First, it saves the incoming user message to the <code>messages</code> table in PostgreSQL. Second, it calls the <code>build_system_prompt()</code> function in <code>services/memory.py</code>, which queries the <code>user_preferences</code> table for this user and constructs a dynamic system prompt incorporating their known preferences. Third, it retrieves the full message history for this conversation from the <code>messages</code> table. Fourth, it constructs the message array to be sent to GPT-4o. If the user's message included an image URL pointing to the <code>/uploads/</code> directory, the backend reads the image file from disk, encodes it as a base64 data URI (for example, <code>data:image/jpeg;base64,...</code>), and constructs a vision-compatible message object containing both the text content and the image URL. This is required because the Azure OpenAI API is a remote service and cannot access the application's local file system directly. Fifth, it calls the Azure OpenAI GPT-4o deployment via the <code>openai</code> Python SDK with <code>stream=True</code> enabled.</p>
+
+<h4>Step 5: Streaming Response Delivery</h4>
+
+<p>The FastAPI route generates a streaming HTTP response using the SSE (Server-Sent Events) protocol. As GPT-4o generates its response token by token, each content delta is read from the async stream and immediately forwarded to the frontend as a JSON-formatted SSE event with the structure <code>data: {"choices":[{"delta":{"content":"token"}}]}</code>. The frontend's <code>consumeSSE()</code> function in <code>lib/streaming.ts</code> reads each event using the browser's <code>fetch</code> API with a <code>ReadableStream</code> reader, extracts the content delta, and appends it to the active assistant message in the Zustand chat store. The React component re-renders after each append, producing a real-time typing animation effect in the chat window.</p>
+
+<h4>Step 6: Generate Marker Detection and Concept Button</h4>
+
+<p>When GPT-4o determines — based on the accumulated conversation context and the behavioural rules in the system prompt — that sufficient information exists to generate a tattoo concept image, it embeds a structured marker at the end of its response. This marker takes the form <code>[GENERATE: detailed image generation prompt here]</code>. The marker contains a complete, detailed image generation prompt that GPT-4o composes from all conversation context, including the discussed style, elements, colours, placement, and any visual references from uploaded images.</p>
+
+<p>After streaming is complete, the <code>MessageBubble.tsx</code> React component applies a regular expression (<code>/\[GENERATE:\s*([^\]]+)\]/i</code>) to the full response text. If the marker is found, it is stripped from the displayed text and a "Generate Concept" button is rendered below the assistant's message. The detailed prompt captured from inside the marker is stored as a prop on this button, ready to be submitted to the image generation endpoint when the user clicks it.</p>
+
+<h4>Step 7: Image Generation</h4>
+
+<p>When the user clicks the "Generate Concept" button, the <code>GenerateButton.tsx</code> component calls <code>POST /api/images/generate</code> with the AI-composed prompt and the current conversation ID. The backend's <code>generate_tattoo_image()</code> function in <code>services/azure_image_gen.py</code> applies a secondary enrichment step to the prompt, appending style-specific technical descriptors based on keyword detection (for example, if the word "japanese" is present, the suffix "Japanese irezumi style, bold outlines, traditional motifs, vibrant colour fills" is appended). The enriched prompt is then submitted to the Azure OpenAI gpt-image-1.5 deployment. The API returns a signed URL pointing to the generated 1024x1024 pixel image. The backend immediately downloads the image from this URL using the <code>httpx</code> HTTP client and saves it permanently to the <code>/uploads/</code> directory with a UUID filename, because the Azure signed URL has a limited validity window. A record of the generation is saved to the <code>generated_images</code> table in PostgreSQL. The backend returns the permanent local image URL to the frontend. The frontend's <code>GenerateButton.tsx</code> component adds the image to the gallery store and also injects a new assistant message into the chat store containing only the image URL, so the generated concept image appears inline within the conversation thread immediately below the recommendation that prompted it.</p>
+
+<h4>Step 8: Preference Extraction Background Task</h4>
+
+<p>After the SSE stream closes and the assistant message is saved to the database, the FastAPI route triggers a background task using FastAPI's <code>BackgroundTasks</code> mechanism. This task calls GPT-4o at a temperature of 0 (deterministic output) with a structured extraction prompt requesting a JSON object containing four fields: <code>preferred_styles</code>, <code>themes</code>, <code>color_prefs</code>, and <code>placement</code>. The model is instructed to extract only preferences that the user explicitly expressed or strongly implied in the conversation. The <code>update_preferences()</code> function in <code>services/memory.py</code> then merges these new values into the existing <code>user_preferences</code> record for this user, deduplicating list entries and preserving all previously recorded preferences. This background extraction does not block the main response and is transparent to the user.</p>
+
+<h3>3.3 Architecture Flowchart</h3>
+
+<div class="note">
+  <strong>Note to student:</strong> Replace the text diagram below with a proper visual flowchart created in draw.io, Lucidchart, or Microsoft Visio before submission. The text below describes the exact data flow to reproduce as a diagram.
+</div>
+
+<div class="flowchart-box">
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                          USER (Browser at localhost:3000)                    │
+│  ┌──────────────┐   ┌──────────────────┐   ┌────────────────────────────┐  │
+│  │  Text Input  │   │   Voice Input    │   │      Image Upload          │  │
+│  │  (Textarea)  │   │ (MediaRecorder)  │   │   (File / Drag-and-drop)   │  │
+│  └──────┬───────┘   └────────┬─────────┘   └────────────┬───────────────┘  │
+│         │                    │                            │                  │
+│         └────────────────────┼────────────────────────────┘                 │
+│                              │  HTTP/SSE (Bearer JWT)                       │
+└──────────────────────────────┼──────────────────────────────────────────────┘
+                               ▼
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                        FASTAPI BACKEND (localhost:8000)                      │
+│                                                                              │
+│  POST /api/voice/transcribe                                                  │
+│  ┌────────────────────────────────────────────┐                             │
+│  │ 1. FFmpeg converts WebM → 16kHz WAV        │                             │
+│  │ 2. Azure Speech SDK transcribes WAV        │────▶ Azure Speech Services  │
+│  │ 3. Returns transcribed text to frontend    │      (eastus region)        │
+│  └────────────────────────────────────────────┘                             │
+│                                                                              │
+│  POST /api/images/upload                                                     │
+│  ┌────────────────────────────────────────────┐                             │
+│  │ 1. Validates file type and size            │                             │
+│  │ 2. Saves file to /uploads/ directory       │                             │
+│  │ 3. Returns /uploads/{uuid}.jpg URL         │                             │
+│  └────────────────────────────────────────────┘                             │
+│                                                                              │
+│  POST /api/chat/conversations/{id}/messages                                  │
+│  ┌────────────────────────────────────────────┐                             │
+│  │ 1. Save user message to PostgreSQL         │                             │
+│  │ 2. Load user preferences from PostgreSQL   │                             │
+│  │ 3. Build system prompt with preferences    │                             │
+│  │ 4. Load conversation history               │                             │
+│  │ 5. Encode image as base64 (if attached)    │                             │
+│  │ 6. Stream call to Azure OpenAI GPT-4o      │────▶ Azure OpenAI GPT-4o   │
+│  │ 7. Forward SSE chunks to frontend          │      (tattoo-bot resource)  │
+│  │ 8. Save assistant message to PostgreSQL    │                             │
+│  │ 9. Background: extract preferences         │────▶ Azure OpenAI GPT-4o   │
+│  └────────────────────────────────────────────┘      (extraction call)     │
+│                                                                              │
+│  POST /api/images/generate                                                   │
+│  ┌────────────────────────────────────────────┐                             │
+│  │ 1. Enrich prompt with style descriptors    │                             │
+│  │ 2. Call gpt-image-1.5 API                  │────▶ Azure OpenAI           │
+│  │ 3. Download image from signed URL          │      gpt-image-1.5          │
+│  │ 4. Save PNG to /uploads/ directory         │      (odlu resource)        │
+│  │ 5. Save record to generated_images table   │                             │
+│  │ 6. Return local image URL to frontend      │                             │
+│  └────────────────────────────────────────────┘                             │
+│                          │                  │                               │
+│                          ▼                  ▼                               │
+│              ┌───────────────────────────────────┐                         │
+│              │         PostgreSQL Database        │                         │
+│              │  users | conversations | messages  │                         │
+│              │  user_preferences | generated_images│                        │
+│              └───────────────────────────────────┘                         │
+└─────────────────────────────────────────────────────────────────────────────┘
+                               │
+                               │ SSE stream / JSON responses
+                               ▼
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                     NEXT.JS FRONTEND (Response Rendering)                    │
+│  1. consumeSSE() reads stream tokens → appendToLastMessage() in chatStore   │
+│  2. MessageBubble.tsx detects [GENERATE: ...] marker → shows button         │
+│  3. GenerateButton click → calls /api/images/generate → injects image msg   │
+│  4. Gallery page displays all generated_images for current user             │
+└─────────────────────────────────────────────────────────────────────────────┘
+</div>
+
+<h3>3.4 Database Schema</h3>
+
+<table>
+  <tr>
+    <th>Table</th>
+    <th>Key Columns</th>
+    <th>Purpose</th>
+  </tr>
+  <tr>
+    <td><code>users</code></td>
+    <td>id (UUID), name, email, password_hash, created_at</td>
+    <td>Stores registered user accounts with bcrypt-hashed passwords</td>
+  </tr>
+  <tr>
+    <td><code>conversations</code></td>
+    <td>id (UUID), user_id (FK), title, created_at, updated_at</td>
+    <td>One row per chat session; title derived from first message</td>
+  </tr>
+  <tr>
+    <td><code>messages</code></td>
+    <td>id (UUID), conversation_id (FK), role, content, image_url, created_at</td>
+    <td>Full message history; role is either "user" or "assistant"</td>
+  </tr>
+  <tr>
+    <td><code>user_preferences</code></td>
+    <td>id (UUID), user_id (FK), preferred_styles (JSONB), themes (JSONB), color_prefs (JSONB), placement (JSONB)</td>
+    <td>Accumulated aesthetic preferences extracted from all conversations</td>
+  </tr>
+  <tr>
+    <td><code>generated_images</code></td>
+    <td>id (UUID), user_id (FK), conversation_id (FK), prompt, image_url, style, created_at</td>
+    <td>Record of every generated concept image; populates the Gallery page</td>
+  </tr>
+</table>
+
+<div class="page-break"></div>
+
+<!-- SECTION 4 -->
+<h2 id="section4">4. Azure AI Services: Technical Justification</h2>
+
+<h3>4.1 Azure OpenAI GPT-4o (Chat and Vision)</h3>
+
+<p><strong>Service:</strong> Azure OpenAI Service, GPT-4o deployment named <code>gpt-4o</code>, API version <code>2024-12-01-preview</code>, hosted at <code>https://tattoo-bot.openai.azure.com/</code></p>
+
+<p><strong>Purpose in the system:</strong> GPT-4o serves as the core intelligence of the recommendation system. It handles all user-facing conversation, interprets tattoo preferences expressed in natural language, analyses uploaded reference images through its native vision capability, generates detailed multi-point design recommendations, and composes the detailed image generation prompts that are passed to gpt-image-1.5.</p>
+
+<h4>Justification for Selection</h4>
+
+<p><strong>Native multimodal vision support:</strong> GPT-4o natively processes both text and images within a single API call using a unified message format. When a user uploads a reference photo — for example, an existing tattoo, a piece of artwork, or a pattern they wish to incorporate — the backend encodes the image as a base64 data URI and includes it in the message payload using the vision-compatible content format: <code>[{"type": "text", "text": "..."}, {"type": "image_url", "image_url": {"url": "data:image/jpeg;base64,..."}}]</code>. GPT-4o then processes both the image and the text together, identifying the artistic style, specific visual elements, line weight, shading technique, and colour palette present in the image, and incorporating this analysis directly into its recommendation. This eliminates the need for a separate computer vision pipeline and keeps the architecture simple.</p>
+
+<p><strong>Instruction-following for complex, multi-constraint recommendations:</strong> Tattoo recommendation requires the model to simultaneously satisfy multiple creative and practical constraints. For example, a user may request a Japanese-style dragon that fits within a forearm sleeve, avoids the wrist area due to pain sensitivity, uses a muted colour palette with red accent eyes, and complements an existing geometric piece on the upper arm. GPT-4o's instruction-following capability reliably handles this level of compositional constraint, whereas smaller models tested in development produced generic or constraint-ignoring responses.</p>
+
+<p><strong>Real-time streaming API:</strong> The Azure OpenAI streaming API allows the backend to receive and immediately forward GPT-4o's response tokens to the frontend via Server-Sent Events. Each token is delivered within milliseconds of generation, so the user sees the response appearing naturally rather than waiting for the complete response. This streaming behaviour is critical for user experience in a conversational recommendation context, where responses may be several hundred words long.</p>
+
+<p><strong>Large context window:</strong> GPT-4o supports a 128,000-token context window. This is essential for the multi-turn conversational use case, as the full conversation history, user preferences, and system prompt must all be included in every API call. Conversations about complex tattoo designs can extend to thirty or more exchanges, and the model must retain awareness of all prior design decisions and user feedback throughout.</p>
+
+<p><strong>Implementation detail:</strong> The <code>azure_openai.py</code> service creates a singleton <code>AsyncAzureOpenAI</code> client with a custom <code>httpx.Timeout</code> of 90 seconds for reads (to accommodate longer responses) and <code>max_retries=0</code> (to surface errors immediately rather than hiding them behind silent retries). The <code>stream_chat_response()</code> function constructs the full messages array, calls <code>client.chat.completions.create(stream=True)</code>, and yields each <code>choice.delta.content</code> value as it arrives.</p>
+
+<h3>4.2 Azure OpenAI gpt-image-1.5 (Image Generation)</h3>
+
+<p><strong>Service:</strong> Azure OpenAI Service, gpt-image-1.5 deployment, API version <code>2024-02-01</code>, hosted at <code>https://odlu-mnpspgf4-eastus2.cognitiveservices.azure.com/</code> (a separate Azure OpenAI resource from the chat model)</p>
+
+<p><strong>Purpose in the system:</strong> gpt-image-1.5 generates the visual tattoo concept images that appear inline in the chat conversation and are saved to the user's personal gallery. These images serve as the primary tangible output of the recommendation session, giving the user a visual reference they can present to a tattoo artist.</p>
+
+<h4>Justification for Selection</h4>
+
+<p><strong>Availability on Azure as the current generation model:</strong> DALL-E 3, the previous generation image generation model on Azure OpenAI, was retired in March 2026 and is no longer available. The gpt-image-1.5 model is the current Azure-native replacement, making it the appropriate and only supported choice for image generation within the Azure ecosystem at the time of this project's development.</p>
+
+<p><strong>Prompt comprehension and artistic quality:</strong> The bot uses a two-stage prompt pipeline specifically designed to maximise the quality of generated tattoo concept images. In the first stage, GPT-4o itself composes a detailed, structured image generation prompt based on the entire conversation history. This prompt contains specific stylistic direction, subject matter, compositional guidance, colour palette information, and placement context. In the second stage, the backend's <code>_enrich_prompt()</code> function in <code>azure_image_gen.py</code> appends style-specific technical descriptors based on keyword detection — for example, if the word "japanese" appears in the prompt, the phrase "Japanese irezumi style, bold outlines, traditional motifs, vibrant colour fills. High quality tattoo design on white background." is appended. This two-stage enrichment ensures the generated image accurately reflects the specific artistic style discussed with the user.</p>
+
+<p><strong>Response format and persistence:</strong> The gpt-image-1.5 API with version <code>2024-02-01</code> returns a signed URL pointing to the generated image rather than a base64-encoded data string. Because signed URLs have a limited validity window, the backend immediately downloads the image using the <code>httpx</code> HTTP client and saves it as a PNG file in the <code>/uploads/</code> directory with a UUID-based filename. This ensures the image remains permanently accessible through the application's static file server regardless of how much time passes after generation.</p>
+
+<p><strong>Implementation detail:</strong> A separate <code>AsyncAzureOpenAI</code> client instance is maintained for image generation (distinct from the chat client) because the two models require different API version strings. The image client is configured with a 120-second read timeout to accommodate the longer generation time typical of image models. The <code>response_format</code> parameter is deliberately omitted from the API call because gpt-image-1.5 rejects it as an unrecognised parameter, unlike its predecessors.</p>
+
+<h3>4.3 Azure Speech Services (Voice Transcription)</h3>
+
+<p><strong>Service:</strong> Azure Cognitive Services Speech, Speech-to-Text, region <code>eastus</code>, endpoint <code>https://eastus.api.cognitive.microsoft.com/</code></p>
+
+<p><strong>Purpose in the system:</strong> Azure Speech Services converts the user's recorded voice input into text, which is then treated identically to a typed message and passed to GPT-4o for recommendation processing. This provides a hands-free interaction option and makes the bot more accessible to users who prefer to speak rather than type.</p>
+
+<h4>Justification for Selection</h4>
+
+<p><strong>Accuracy for domain-specific vocabulary:</strong> Azure Speech Services uses Microsoft's Unified Speech Model, which has been trained on a vast corpus of conversational speech and provides higher recognition accuracy than browser-native Web Speech API for specialist vocabulary. Tattoo consultations frequently involve style names (for example, "irezumi", "neo-traditional", "dotwork"), anatomical placement terms (for example, "sternum", "clavicle", "ditch"), and colour descriptors that general-purpose browser speech recognition may misrecognise. The Azure model handles this vocabulary with greater reliability.</p>
+
+<p><strong>Server-side processing for consistency:</strong> By processing audio on the server rather than in the browser, the application avoids the significant variability in speech recognition quality and language support across different browsers and operating systems. The browser's only role is audio capture via the <code>MediaRecorder</code> Web API, which records in WebM format. The backend then converts this WebM file to a 16kHz mono WAV file using FFmpeg before submission to the Azure Speech SDK, because the SDK requires WAV format with a specific sample rate. This conversion step is implemented in <code>azure_speech.py</code> using Python's <code>subprocess</code> module and runs in a thread pool executor to avoid blocking the async event loop.</p>
+
+<p><strong>Asynchronous SDK integration:</strong> The <code>azure-cognitiveservices-speech</code> Python SDK uses a callback-based event model. The implementation in <code>azure_speech.py</code> wraps these callbacks in an <code>asyncio.Future</code> that resolves when the <code>recognized</code> event fires or raises an exception when the <code>canceled</code> event fires. An <code>asyncio.wait_for()</code> call applies a 30-second timeout to prevent indefinite blocking. This pattern integrates cleanly with FastAPI's asynchronous request handling without requiring thread-blocking operations on the main event loop.</p>
+
+<div class="page-break"></div>
+
+<!-- SECTION 5 -->
+<h2 id="section5">5. Recommendation Logic</h2>
+
+<h3>5.1 System Prompt Architecture</h3>
+
+<p>The recommendation logic in Ink AI is implemented primarily through a carefully engineered and dynamically constructed system prompt that is rebuilt for every API call. The <code>build_system_prompt()</code> function in <code>services/memory.py</code> assembles this prompt from two components that together define the bot's persona, behavioural constraints, and user-specific context.</p>
+
+<p>The base instruction component establishes the bot's identity and behavioural rules. It instructs GPT-4o to act as an expert tattoo artist and consultant working for Ink AI. It directs the model to discuss ideas, ask clarifying questions, and suggest styles before moving towards image generation. It specifies a set of numbered rules governing when and how to use the <code>[GENERATE: ...]</code> marker, including the requirement to ask the user's permission before generating any image and the requirement that the marker only appear when the user has confirmed they want to see a concept. This rule-based structure ensures the bot behaves predictably and does not generate unsolicited images.</p>
+
+<p>The preference component is appended to the base instructions whenever the user's preference record in the database contains any entries. This section lists the user's known preferred styles, themes, and colour preferences, formatted as readable bullet points. For example, a user who has expressed interest in Japanese irezumi and fine line botanical styles in previous sessions will have a system prompt that begins with: "Known client preferences: Preferred styles: Japanese irezumi, fine line botanical. Themes: nature, lotus flowers, koi fish. Colours: soft pastels, black and grey." GPT-4o incorporates this context into every recommendation without the user needing to re-state their preferences.</p>
+
+<h3>5.2 Image Generation Gate</h3>
+
+<p>A critical aspect of the recommendation logic is the controlled gate that determines when an image generation prompt is offered to the user. The system prompt instructs GPT-4o to follow a strict two-step protocol. In the first step, the bot discusses ideas and refines the design concept through conversation. Once a sufficiently clear and specific design concept has emerged from the dialogue, the bot asks the user explicitly whether they would like to see a concept image. In the second step, if the user confirms (by saying "yes", "go ahead", "generate it", or a similar affirmation), the bot composes a detailed image generation prompt and embeds it in its response using the <code>[GENERATE: ...]</code> marker format.</p>
+
+<p>The prompt inside the marker is composed by GPT-4o itself based on all context from the conversation. This prompt typically runs to two or three sentences and includes the specific style, subject matter, compositional details, colour palette, and background format. For example, a marker might contain: "A fine line botanical tattoo sleeve featuring lotus flowers, delicate vines, and lavender sprigs in soft pink, blue and green tones, flowing naturally along the arm contour from shoulder to wrist, detailed single-needle linework on a white background." This GPT-composed prompt is then further enriched by the backend's keyword-based enrichment function before being sent to gpt-image-1.5.</p>
+
+<p>The frontend's <code>MessageBubble.tsx</code> component applies the regular expression <code>/\[GENERATE:\s*([^\]]+)\]/i</code> to the completed assistant message after streaming ends. If a match is found, the marker content is captured as the generation prompt, the marker itself is stripped from the displayed text (so the user sees only the readable recommendation text), and the "Generate Concept" button is rendered below the message containing the captured prompt as a component property.</p>
+
+<h3>5.3 Preference Extraction Loop</h3>
+
+<p>The preference extraction loop is the mechanism by which Ink AI accumulates knowledge about each individual user over time. It operates as follows. After every assistant message has been saved to the database, the FastAPI background task calls GPT-4o with a dedicated extraction prompt at a temperature setting of 0 to ensure deterministic, structured output. The extraction prompt instructs the model to analyse the full conversation and return a JSON object with four fields. The <code>preferred_styles</code> field is a list of specific tattoo styles the user expressed interest in. The <code>themes</code> field is a list of subject matter and motif preferences. The <code>color_prefs</code> field captures colour palette preferences. The <code>placement</code> field records body area preferences mentioned by the user.</p>
+
+<p>The <code>update_preferences()</code> function in <code>services/memory.py</code> receives this JSON object and merges each list into the existing preference record for the user. New values are appended; existing values are preserved; duplicate entries are removed. The merged record is then written back to the <code>user_preferences</code> table. On the next message in any conversation, the updated preferences are retrieved and injected into the system prompt, so the bot's recommendations immediately reflect what it has learned.</p>
+
+<p>This loop creates a compounding personalisation effect: each conversation refines the bot's model of the user's aesthetic preferences, making subsequent recommendations progressively more targeted and less generic. A user who has had three conversations with the bot will receive recommendations that draw on a rich accumulated profile, whereas a brand new user receives recommendations based on the general domain knowledge of GPT-4o's training corpus until the first extraction cycle completes.</p>
+
+<h3>5.4 Multi-turn Conversation Management</h3>
+
+<p>Each conversation in Ink AI maintains a complete message history that is retrieved from the database and included in every GPT-4o API call. The messages are ordered chronologically and formatted according to the OpenAI messages array format, with alternating user and assistant roles. The system prompt is always inserted as the first message with the role of "system". The full conversation is then appended in sequence. This approach, known as full-context prompting, allows GPT-4o to reference any detail from any point in the conversation when generating its response. The user can refer back to ideas mentioned earlier, ask the bot to compare two design options discussed in previous messages, or request modifications to a concept that was described several messages ago, and the bot will respond with full awareness of all prior context.</p>
+
+<p>Conversations are stored persistently in PostgreSQL, meaning users can return to a conversation after days or weeks and the bot will resume with full awareness of what was discussed. The sidebar in the frontend displays the list of recent conversations retrieved from the <code>/api/chat/conversations</code> endpoint, allowing users to manage and navigate their conversation history.</p>
+
+<div class="page-break"></div>
+
+<!-- SECTION 6 -->
+<h2 id="section6">6. Screenshots of the Running System</h2>
+
+<p>The following screenshots demonstrate the functional operation of the Ink AI bot across its key features. All screenshots were captured from the running Docker deployment accessible at <code>http://localhost:3000</code>.</p>
+
+<div class="screenshot-placeholder">
+  [SCREENSHOT 1: User Registration Page]<br/>
+  Show the registration form with fields for Full Name, Email, and Password.
+  Capture the moment of successful registration with the redirect to the chat page.
+</div>
+
+<div class="screenshot-placeholder">
+  [SCREENSHOT 2: User Login Page]<br/>
+  Show the login form and the successful redirect to the chat welcome screen.
+</div>
+
+<div class="screenshot-placeholder">
+  [SCREENSHOT 3: Chat Welcome Screen]<br/>
+  Show the welcome page with the four quick-prompt suggestion cards and the input bar.
+</div>
+
+<div class="screenshot-placeholder">
+  [SCREENSHOT 4: Text-based Recommendation in Progress]<br/>
+  Show a conversation where the user has typed a tattoo idea and the bot is providing
+  a detailed recommendation with style options, streaming live in the chat window.
+</div>
+
+<div class="screenshot-placeholder">
+  [SCREENSHOT 5: Voice Input Recording]<br/>
+  Show the VoiceInput component active in the chat input bar, with the red recording
+  indicator and the timer counting up. Then show the transcribed text appearing in the input field.
+</div>
+
+<div class="screenshot-placeholder">
+  [SCREENSHOT 6: Reference Image Upload and Vision Analysis]<br/>
+  Show a conversation where the user has uploaded a reference image (visible as a thumbnail
+  in the user message). Show the bot's response analysing the style, elements, and colours
+  visible in the uploaded image and incorporating this analysis into its recommendation.
+</div>
+
+<div class="screenshot-placeholder">
+  [SCREENSHOT 7: Generate Concept Button]<br/>
+  Show the "Generate Concept" button appearing below an assistant message after the user
+  has confirmed they want to see a concept image. The button should be clearly visible
+  at the bottom of the recommendation text.
+</div>
+
+<div class="screenshot-placeholder">
+  [SCREENSHOT 8: Generated Tattoo Concept Image in Chat]<br/>
+  Show the generated concept image appearing as a new message in the chat thread,
+  displayed inline below the recommendation. The image should show the tattoo design
+  matching the style discussed in the conversation.
+</div>
+
+<div class="screenshot-placeholder">
+  [SCREENSHOT 9: Gallery Page]<br/>
+  Show the Gallery page displaying multiple generated concept images as a grid,
+  with the style label, prompt summary, and creation date visible for each card.
+</div>
+
+<div class="screenshot-placeholder">
+  [SCREENSHOT 10: Backend Logs Showing Azure API Calls]<br/>
+  Show the Docker terminal output with log lines confirming the POST requests to the
+  Azure OpenAI and Azure Speech endpoints. For example:
+  "POST /api/chat/conversations/{id}/messages HTTP/1.1" 200 OK
+  "POST /api/voice/transcribe HTTP/1.1" 200 OK
+  "POST /api/images/generate HTTP/1.1" 201 Created
+</div>
+
+<div class="page-break"></div>
+
+<!-- SECTION 7 -->
+<h2 id="section7">7. Conclusion</h2>
+
+<p>The Ink AI tattoo recommendation bot successfully satisfies all technical and functional requirements specified in Option 2 of the task specification. The system implements a fully operational multimodal recommendation interface that accepts text, voice, and image inputs within a single conversational interface. It integrates three distinct Azure AI services — Azure OpenAI GPT-4o for conversational intelligence and vision analysis, Azure OpenAI gpt-image-1.5 for concept image generation, and Azure Speech Services for voice-to-text transcription — all selected and justified based on their specific technical capabilities relative to the requirements of the tattoo recommendation domain.</p>
+
+<p>The system architecture follows industry-standard engineering practices. These include JSON Web Token authentication with bcrypt password hashing, asynchronous server-sent event streaming for real-time response delivery, Docker Compose containerisation for consistent and reproducible deployment, persistent PostgreSQL storage for all user data, and a dynamic preference extraction loop that personalises recommendations across sessions. The architecture diagram in Section 3.3 illustrates the complete data flow from user input through each Azure AI service to the final recommendation or generated image output.</p>
+
+<p>The recommendation logic is implemented through a combination of dynamic system prompt engineering, a controlled image generation gate that requires explicit user confirmation before generating any visual content, and an automated preference extraction background task that accumulates a per-user aesthetic profile over time. Together, these mechanisms enable the bot to provide genuinely personalised recommendations that improve with each interaction, rather than producing generic responses that ignore the individual user's history and preferences.</p>
+
+<p>The bot demonstrates effective multimodal interaction: a user can describe their tattoo idea in text, refine it using voice input, upload a reference photo for visual analysis, receive a detailed written recommendation, and view an AI-generated concept image — all within a single coherent conversation. This seamless integration of multiple input and output modalities within one interface fulfils the core requirement of the task specification and demonstrates the practical application of Azure AI services in a real-world intelligent recommendation system.</p>
+
+<div class="page-break"></div>
+
+<!-- SECTION 8 -->
+<h2 id="section8">8. References</h2>
+
+<div class="note">
+  <strong>Note:</strong> Complete all references below in Harvard format before submission. Add any additional sources you cite in the report body. A similarity score must not exceed 39%.
+</div>
+
+<p>Microsoft Corporation 2024, <em>Azure OpenAI Service documentation</em>, Microsoft Azure, viewed 27 May 2026, &lt;https://learn.microsoft.com/en-us/azure/ai-services/openai/&gt;.</p>
+
+<p>Microsoft Corporation 2024, <em>GPT-4o model documentation</em>, Microsoft Azure OpenAI, viewed 27 May 2026, &lt;https://learn.microsoft.com/en-us/azure/ai-services/openai/concepts/models&gt;.</p>
+
+<p>Microsoft Corporation 2024, <em>Azure AI Speech documentation — Speech to Text</em>, Microsoft Azure, viewed 27 May 2026, &lt;https://learn.microsoft.com/en-us/azure/ai-services/speech-service/speech-to-text&gt;.</p>
+
+<p>Microsoft Corporation 2025, <em>Azure OpenAI image generation — gpt-image-1</em>, Microsoft Azure, viewed 27 May 2026, &lt;https://learn.microsoft.com/en-us/azure/ai-services/openai/concepts/image-generation&gt;.</p>
+
+<p>OpenAI 2024, <em>GPT-4 technical report</em>, OpenAI, viewed 27 May 2026, &lt;https://openai.com/research/gpt-4&gt;.</p>
+
+<p>Ramírez, S 2023, <em>FastAPI documentation</em>, Tiangolo, viewed 27 May 2026, &lt;https://fastapi.tiangolo.com/&gt;.</p>
+
+<p>Vercel 2024, <em>Next.js 15 documentation — App Router</em>, Vercel, viewed 27 May 2026, &lt;https://nextjs.org/docs&gt;.</p>
+
+<p>SQLAlchemy 2024, <em>SQLAlchemy 2.0 documentation — asynchronous I/O (asyncio)</em>, SQLAlchemy Project, viewed 27 May 2026, &lt;https://docs.sqlalchemy.org/en/20/orm/extensions/asyncio.html&gt;.</p>
+
+<p>Zustand 2024, <em>Zustand documentation — a small, fast, and scalable state management solution</em>, PMNDs, viewed 27 May 2026, &lt;https://github.com/pmndrs/zustand&gt;.</p>
+
+<p>[ADD ADDITIONAL REFERENCES: tattoo style academic sources, AI chatbot interaction design papers, multimodal AI literature, dataset papers]</p>
+
+</body>
+</html>

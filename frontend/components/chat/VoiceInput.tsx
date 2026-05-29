@@ -63,12 +63,14 @@ export function VoiceInput({ onTranscription, onCancel }: VoiceInputProps) {
         try {
           const text = await transcribeReal(blob)
           onTranscription(text)
-        } catch {
-          // Fall back to mock on API error
-          const text = MOCK_TRANSCRIPTIONS[Math.floor(Math.random() * MOCK_TRANSCRIPTIONS.length)]
-          onTranscription(text)
+        } catch (err) {
+          // Surface the real error — do NOT silently substitute a random mock phrase
+          const msg = err instanceof Error ? err.message : 'Transcription failed'
+          setErrorMsg(`Voice transcription failed: ${msg}. Please type your message instead.`)
+          setState('error')
         }
       } else {
+        // Demo mode — use mock transcription
         await new Promise((r) => setTimeout(r, 850))
         const text = MOCK_TRANSCRIPTIONS[Math.floor(Math.random() * MOCK_TRANSCRIPTIONS.length)]
         onTranscription(text)
@@ -92,9 +94,16 @@ export function VoiceInput({ onTranscription, onCancel }: VoiceInputProps) {
         recorder.start()
         setState('recording')
         timerRef.current = setInterval(() => setSeconds((s) => s + 1), 1000)
-      } catch {
+      } catch (err) {
         if (!cancelled) {
-          setErrorMsg('Microphone access denied. Please allow microphone permission and try again.')
+          const name = (err as { name?: string })?.name ?? ''
+          if (name === 'NotAllowedError' || name === 'PermissionDeniedError') {
+            setErrorMsg('Microphone access denied. Click the 🔒 icon in your browser address bar and allow microphone, then try again.')
+          } else if (name === 'NotFoundError' || name === 'DevicesNotFoundError') {
+            setErrorMsg('No microphone found. Please connect a microphone and try again.')
+          } else {
+            setErrorMsg(`Could not start recording: ${(err as Error).message ?? name}`)
+          }
           setState('error')
         }
       }
