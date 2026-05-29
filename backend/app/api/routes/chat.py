@@ -52,6 +52,7 @@ def _build_message_content(content: str | None, image_url: str | None) -> str | 
     parts.append({'type': 'image_url', 'image_url': {'url': resolved_url}})
     return parts
 
+
 router = APIRouter(prefix='/api/chat', tags=['chat'])
 
 

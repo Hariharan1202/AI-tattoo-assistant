@@ -172,10 +172,8 @@ pipeline {
                                     "-Dsonar.exclusions=frontend/**,**/__pycache__/**,**/*.pyc"
                             """
                         }
-                        // Wait up to 5 min for the quality gate result via SonarQube webhook
-                        timeout(time: 5, unit: 'MINUTES') {
-                            waitForQualityGate abortPipeline: true
-                        }
+                        // Quality gate is enforced by sonar.qualitygate.wait=true in sonar-project.properties
+                        // The scanner itself exits non-zero if the gate fails — no waitForQualityGate needed.
                     }
                 }
                 stage('Backend lint') {
