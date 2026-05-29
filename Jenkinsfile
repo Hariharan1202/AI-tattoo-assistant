@@ -493,22 +493,22 @@ except Exception as e:
                     sleep 20
 
                     // Verify the backend target is being scraped
-                    sh """
-                        python3 -c "
+                    sh '''
+                        python3 << 'PYEOF'
 import urllib.request, json, sys
-with urllib.request.urlopen('http://localhost:9090/api/v1/targets') as r:
+with urllib.request.urlopen("http://localhost:9090/api/v1/targets") as r:
     data = json.loads(r.read())
-active = data['data']['activeTargets']
-up     = [t for t in active if t['health'] == 'up']
-down   = [t for t in active if t['health'] != 'up']
-print(f'Prometheus targets — UP: {len(up)}  DOWN: {len(down)}')
+active = data["data"]["activeTargets"]
+up     = [t for t in active if t["health"] == "up"]
+down   = [t for t in active if t["health"] != "up"]
+print("Prometheus targets — UP: {}  DOWN: {}".format(len(up), len(down)))
 for t in down:
-    print(f'  DOWN: {t[\"labels\"].get(\"job\",\"?\")} — {t.get(\"lastError\",\"\")}')
+    print("  DOWN: {} — {}".format(t["labels"].get("job", "?"), t.get("lastError", "")))
 if not up:
-    print('ERROR: No targets are UP')
+    print("ERROR: No targets are UP")
     sys.exit(1)
-"
-                    """
+PYEOF
+                    '''
                     echo "Monitoring stack verified — Prometheus :9090, Grafana :3030"
                 }
             }
