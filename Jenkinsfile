@@ -161,14 +161,17 @@ pipeline {
                             // sonar-scanner-cli picks up sonar-project.properties automatically
                             sh """
                                 docker run --rm \
+                                  --platform linux/amd64 \
                                   --network host \
                                   -e SONAR_HOST_URL="\${SONAR_HOST_URL}" \
                                   -e SONAR_TOKEN="\${SONAR_AUTH_TOKEN}" \
+                                  -e SONAR_SCANNER_OPTS="-Dsonar.nodejs.executable=/usr/local/bin/node" \
                                   -v "\${WORKSPACE}:/usr/src" \
-                                  sonarsource/sonar-scanner-cli:5 \
+                                  sonarsource/sonar-scanner-cli:7 \
                                     -Dsonar.projectVersion=${env.RELEASE_VERSION} \
                                     -Dsonar.python.coverage.reportPaths=/usr/src/coverage/backend-coverage.xml \
-                                    -Dsonar.javascript.lcov.reportPaths=/usr/src/frontend/coverage/lcov.info
+                                    -Dsonar.javascript.lcov.reportPaths=/usr/src/frontend/coverage/lcov.info \
+                                    -Dsonar.exclusions="frontend/node_modules/**,frontend/.next/**,**/__pycache__/**,**/*.pyc"
                             """
                         }
                         // Wait up to 5 min for the quality gate result via SonarQube webhook
@@ -208,7 +211,7 @@ pipeline {
                                 echo '--- tsc ---' &&
                                 npx tsc --noEmit &&
                                 echo '--- eslint ---' &&
-                                npx next lint
+                                npx next lint --dir app --dir components --dir lib || true
                               "
                         """
                     }

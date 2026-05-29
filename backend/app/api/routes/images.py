@@ -76,7 +76,7 @@ async def generate_image(
     except Exception as exc:
         raise HTTPException(status_code=status.HTTP_502_BAD_GATEWAY, detail=f'Image generation failed: {exc}')
 
-    from app.services.azure_image_gen import _enrich_prompt, STYLE_HINTS
+    from app.services.azure_image_gen import STYLE_HINTS
     style = next(
         (hint.split(',')[0] for kw, hint in STYLE_HINTS.items() if kw in body.prompt.lower()),
         'Custom',
